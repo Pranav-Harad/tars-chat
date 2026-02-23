@@ -4,9 +4,6 @@ export default function Home() {
   return (
     <main className="flex h-[calc(100vh-65px)] w-full overflow-hidden bg-background">
       <div className="flex w-full h-full bg-background relative overflow-hidden">
-        {/* Sidebar Component */}
-        <Sidebar />
-
         {/* Main empty chat area for desktop when no conversation is selected */}
         <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-muted/10 relative">
           <div className="text-center p-8 max-w-sm fade-in animate-in zoom-in-95 duration-500">

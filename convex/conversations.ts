@@ -45,6 +45,43 @@ export const createOrGet = mutation({
     },
 });
 
+export const createGroup = mutation({
+    args: {
+        name: v.string(),
+        participantIds: v.array(v.id("users")),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized");
+        }
+
+        const currentUser = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!currentUser) {
+            throw new Error("Current user not found");
+        }
+
+        // Ensure current user is in the group
+        const participantIds = new Set([...args.participantIds, currentUser._id]);
+
+        if (participantIds.size < 2) {
+            throw new Error("Group must have at least 2 members");
+        }
+
+        const newConversationId = await ctx.db.insert("conversations", {
+            participantIds: Array.from(participantIds),
+            isGroup: true,
+            groupName: args.name,
+        });
+
+        return newConversationId;
+    },
+});
+
 export const list = query({
     args: {},
     handler: async (ctx) => {
@@ -68,8 +105,19 @@ export const list = query({
         // Enrich with other participant and last message details
         const enriched = await Promise.all(
             myConversations.map(async (c) => {
-                const otherParticipantId = c.participantIds.find(id => id !== currentUser._id);
-                const otherUser = otherParticipantId ? await ctx.db.get(otherParticipantId) : null;
+                let displayInfo = { name: "Unknown", avatarUrl: undefined as string | undefined, isOnline: false };
+
+                if (c.isGroup) {
+                    displayInfo.name = c.groupName || "Unnamed Group";
+                } else {
+                    const otherParticipantId = c.participantIds.find(id => id !== currentUser._id);
+                    const otherUser = otherParticipantId ? await ctx.db.get(otherParticipantId) : null;
+                    if (otherUser) {
+                        displayInfo.name = otherUser.name;
+                        displayInfo.avatarUrl = otherUser.avatarUrl;
+                        displayInfo.isOnline = otherUser.isOnline;
+                    }
+                }
 
                 let lastMessage = null;
                 if (c.lastMessageId) {
@@ -87,12 +135,9 @@ export const list = query({
 
                 return {
                     _id: c._id,
-                    otherUser: otherUser ? {
-                        _id: otherUser._id,
-                        name: otherUser.name,
-                        avatarUrl: otherUser.avatarUrl,
-                        isOnline: otherUser.isOnline,
-                    } : null,
+                    isGroup: c.isGroup,
+                    memberCount: c.participantIds.length,
+                    displayInfo,
                     unreadCount,
                     lastMessage: lastMessage ? {
                         text: lastMessage.text,

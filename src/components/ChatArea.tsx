@@ -7,12 +7,13 @@ import { Id } from "../../convex/_generated/dataModel";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { Send, ArrowDown, Trash2, SmilePlus } from "lucide-react";
+import { Send, ArrowDown, Trash2, SmilePlus, Loader2, AlertCircle } from "lucide-react";
 import { format, isToday, isThisYear } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Skeleton } from "./ui/skeleton";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢"];
 
@@ -33,6 +34,8 @@ export function ChatArea({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isScrolledUp, setIsScrolledUp] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [sendError, setSendError] = useState<string | null>(null);
     const router = useRouter();
 
     // Auto-scroll logic
@@ -55,18 +58,23 @@ export function ChatArea({
         setIsScrolledUp(!isAtBottom);
     };
 
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSend = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!text.trim()) return;
 
         const messageText = text.trim();
-        setText("");
+        setIsSending(true);
+        setSendError(null);
 
         try {
             await sendMessage({ conversationId, text: messageText });
+            setText("");
             setIsScrolledUp(false); // Force scroll to bottom when sending
         } catch (error) {
             console.error("Failed to send message:", error);
+            setSendError("Failed to send message. Please try again.");
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -91,11 +99,17 @@ export function ChatArea({
                 </Button>
                 <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                        <AvatarFallback>#</AvatarFallback>
+                        <AvatarFallback>{conversation?.isGroup ? "G" : "#"}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h2 className="font-semibold text-foreground">Conversation</h2>
-                        <p className="text-xs text-muted-foreground">Real-time chat</p>
+                        <h2 className="font-semibold text-foreground">
+                            {conversation?.isGroup ? conversation.groupName : "Conversation"}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                            {conversation?.isGroup
+                                ? `${conversation.participantIds?.length || 0} members`
+                                : "Real-time chat"}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -108,8 +122,33 @@ export function ChatArea({
             >
                 <div className="space-y-6 max-w-3xl mx-auto pb-6 pt-4">
                     {messages === undefined ? (
-                        <div className="flex justify-center p-4">
-                            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                        <div className="space-y-6">
+                            {/* Skeleton loader for messages */}
+                            <div className="flex items-end gap-2 flex-row-reverse">
+                                <div className="w-8 shrink-0" />
+                                <div className="flex flex-col items-end w-full">
+                                    <Skeleton className="h-10 w-[60%] rounded-2xl rounded-br-sm" />
+                                </div>
+                            </div>
+                            <div className="flex items-end gap-2 flex-row">
+                                <Skeleton className="h-8 w-8 rounded-full shrink-0 mb-1" />
+                                <div className="flex flex-col items-start w-full gap-1 z-10">
+                                    <Skeleton className="h-3 w-16" />
+                                    <Skeleton className="h-16 w-[70%] rounded-2xl rounded-bl-sm" />
+                                </div>
+                            </div>
+                            <div className="flex items-end gap-2 flex-row">
+                                <div className="w-8 shrink-0" />
+                                <div className="flex flex-col items-start w-full">
+                                    <Skeleton className="h-10 w-[40%] rounded-2xl rounded-bl-sm" />
+                                </div>
+                            </div>
+                            <div className="flex items-end gap-2 flex-row-reverse">
+                                <div className="w-8 shrink-0" />
+                                <div className="flex flex-col items-end w-full">
+                                    <Skeleton className="h-12 w-[50%] rounded-2xl rounded-br-sm" />
+                                </div>
+                            </div>
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="text-center py-20 opacity-60 fade-in duration-500">
@@ -254,16 +293,35 @@ export function ChatArea({
             )}
 
             {/* Input Area */}
-            <div className="p-4 bg-background/80 backdrop-blur-md border-t">
+            <div className="p-4 bg-background/80 backdrop-blur-md border-t flex flex-col gap-2">
+                {sendError && (
+                    <div className="max-w-3xl mx-auto w-full flex items-center justify-between bg-destructive/10 text-destructive text-sm px-3 py-2 rounded-lg border border-destructive/20 fade-in duration-300">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4" />
+                            <span>{sendError}</span>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs border-destructive/30 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            onClick={() => handleSend()}
+                            disabled={isSending}
+                        >
+                            Retry
+                        </Button>
+                    </div>
+                )}
+
                 <form
                     onSubmit={handleSend}
-                    className="max-w-3xl mx-auto flex items-end gap-3"
+                    className="max-w-3xl mx-auto w-full flex items-end gap-3"
                 >
                     <div className="flex-1 bg-muted/40 border border-muted-foreground/20 rounded-2xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all flex items-center p-1.5 shadow-sm">
                         <Input
                             value={text}
                             onChange={(e) => {
                                 setText(e.target.value);
+                                setSendError(null);
                                 if (e.target.value.trim() !== "") {
                                     if (!typingTimeoutRef.current) {
                                         setTypingMutation({ conversationId }).catch(console.error);
@@ -275,14 +333,19 @@ export function ChatArea({
                             }}
                             placeholder="Type a message..."
                             className="border-0 bg-transparent focus-visible:ring-0 px-3 py-6 shadow-none text-[15px] w-full"
+                            disabled={isSending}
                         />
                         <Button
                             type="submit"
                             size="icon"
-                            disabled={!text.trim()}
+                            disabled={!text.trim() || isSending}
                             className="h-10 w-10 shrink-0 rounded-xl ml-2 transition-transform active:scale-95"
                         >
-                            <Send className="w-5 h-5 -ml-0.5" />
+                            {isSending ? (
+                                <Loader2 className="w-5 h-5 -ml-0.5 animate-spin" />
+                            ) : (
+                                <Send className="w-5 h-5 -ml-0.5" />
+                            )}
                         </Button>
                     </div>
                 </form>
