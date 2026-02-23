@@ -7,7 +7,7 @@ import { Id } from "../../convex/_generated/dataModel";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { Send, ArrowDown, Trash2, SmilePlus, Loader2, AlertCircle } from "lucide-react";
+import { Send, ArrowDown, Trash2, SmilePlus, Loader2, AlertCircle, Check, CheckCheck } from "lucide-react";
 import { format, isToday, isThisYear } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useRouter } from "next/navigation";
@@ -85,6 +85,20 @@ export function ChatArea({
         return format(date, "MMM d, yyyy, h:mm a");
     };
 
+    const getOtherLastRead = () => {
+        if (!conversation?.lastRead || !conversation?.currentUserId) return 0;
+
+        // Find the maximum lastRead timestamp among other participants
+        const otherReadTimes = Object.entries(conversation.lastRead)
+            .filter(([userId]) => userId !== conversation.currentUserId)
+            .map(([, timestamp]) => timestamp as number);
+
+        if (otherReadTimes.length === 0) return 0;
+        return Math.max(...otherReadTimes);
+    };
+
+    const otherLastRead = getOtherLastRead();
+
     return (
         <div className="flex flex-col h-full w-full bg-background relative">
             {/* Header */}
@@ -97,18 +111,27 @@ export function ChatArea({
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </Button>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 relative">
                     <Avatar className="h-10 w-10">
-                        <AvatarFallback>{conversation?.isGroup ? "G" : "#"}</AvatarFallback>
+                        <AvatarImage src={conversation?.displayInfo?.avatarUrl} />
+                        <AvatarFallback>{conversation?.isGroup ? "G" : conversation?.displayInfo?.name?.charAt(0) || "#"}</AvatarFallback>
                     </Avatar>
+                    {conversation && !conversation.isGroup && conversation.displayInfo?.isOnline && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full z-10"></span>
+                    )}
                     <div>
                         <h2 className="font-semibold text-foreground">
-                            {conversation?.isGroup ? conversation.groupName : "Conversation"}
+                            {conversation?.displayInfo?.name || "Loading..."}
                         </h2>
                         <p className="text-xs text-muted-foreground">
                             {conversation?.isGroup
                                 ? `${conversation.participantIds?.length || 0} members`
-                                : "Real-time chat"}
+                                : conversation?.displayInfo?.isOnline
+                                    ? <span className="text-green-600 dark:text-green-500 font-medium">Online</span>
+                                    : conversation?.displayInfo?.lastSeen
+                                        ? `Last seen ${formatTimestamp(Number(conversation.displayInfo.lastSeen))}`
+                                        : "Offline"
+                            }
                         </p>
                     </div>
                 </div>
@@ -245,9 +268,20 @@ export function ChatArea({
                                             </div>
                                         )}
 
-                                        <span className="text-[10px] text-muted-foreground mt-1 px-1">
-                                            {formatTimestamp(msg._creationTime)}
-                                        </span>
+                                        <div className="flex items-center justify-end gap-1 mt-1 px-1">
+                                            <span className="text-[10px] text-muted-foreground block text-right">
+                                                {formatTimestamp(msg._creationTime)}
+                                            </span>
+                                            {msg.isCurrentUser && (
+                                                <div className="transition-all duration-300">
+                                                    {msg._creationTime <= otherLastRead ? (
+                                                        <CheckCheck className="w-[14px] h-[14px] text-primary animate-in zoom-in spin-in-12 duration-300 drop-shadow-sm" />
+                                                    ) : (
+                                                        <Check className="w-[14px] h-[14px] text-muted-foreground/60" />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );

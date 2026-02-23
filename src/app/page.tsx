@@ -23,7 +23,7 @@ export default function Home() {
                 <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-semibold mb-3 tracking-wide">Tars Chat</h2>
+            <h2 className="text-2xl font-semibold mb-3 tracking-wide">Pran Chat</h2>
             <p className="text-muted-foreground leading-relaxed text-sm">
               Select a conversation from the sidebar or search for a user to start messaging.
             </p>

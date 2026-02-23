@@ -172,6 +172,21 @@ export const get = query({
         const conv = await ctx.db.get(args.conversationId);
         if (!conv) return null;
 
+        // Calculate display info
+        let displayInfo = { name: "Unknown", avatarUrl: undefined as string | undefined, isOnline: false, lastSeen: 0 };
+        if (conv.isGroup) {
+            displayInfo.name = conv.groupName || "Unnamed Group";
+        } else {
+            const otherParticipantId = conv.participantIds.find(id => id !== user._id);
+            const otherUser = otherParticipantId ? await ctx.db.get(otherParticipantId) : null;
+            if (otherUser) {
+                displayInfo.name = otherUser.name;
+                displayInfo.avatarUrl = otherUser.avatarUrl;
+                displayInfo.isOnline = otherUser.isOnline;
+                displayInfo.lastSeen = otherUser.lastSeen;
+            }
+        }
+
         // Enrich typing users with names
         const now = Date.now();
         const activeTypingInfo = (conv.typingUsers || []).filter(
@@ -187,7 +202,9 @@ export const get = query({
 
         return {
             ...conv,
+            displayInfo,
             typingNames: typingDetails,
+            currentUserId: user._id, // Pass current user id so client can use it
         };
     }
 });
