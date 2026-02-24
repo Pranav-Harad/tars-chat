@@ -202,76 +202,112 @@ export function Sidebar() {
                                 ))}
                             </>
                         )
-                    ) : (
-                        // Conversations List
-                        conversations?.length === 0 ? (
-                            <div className="p-8 text-center flex flex-col items-center justify-center space-y-3 opacity-60">
-                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" /></svg>
-                                </div>
-                                <p className="text-sm font-medium">No conversations yet</p>
-                                <p className="text-xs text-muted-foreground">Search for a user to start</p>
+                    ) : conversations?.length === 0 ? (
+                        // New user with no conversations — show all available users to discover
+                        <>
+                            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <span>People on Pranverse</span>
+                                {users && users.length > 0 && (
+                                    <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-medium">{users.length}</span>
+                                )}
                             </div>
-                        ) : (
-                            <>
-                                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    Recent
+                            {!users || users.length === 0 ? (
+                                <div className="p-8 text-center flex flex-col items-center justify-center space-y-3 opacity-60">
+                                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" /></svg>
+                                    </div>
+                                    <p className="text-sm font-medium">No other users yet</p>
+                                    <p className="text-xs text-muted-foreground">Share the app with friends!</p>
                                 </div>
-                                {conversations?.map((conv) => {
-                                    const displayInfo = conv.displayInfo;
-                                    if (!displayInfo) return null;
-                                    return (
-                                        <button
-                                            onClick={() => handleConversationClick(conv._id as Id<"conversations">)}
-                                            key={conv._id}
-                                            className="w-full flex items-center space-x-3 p-3 hover:bg-muted/60 focus:bg-muted/80 rounded-xl transition-all duration-200 text-left group"
-                                        >
-                                            <div className="relative">
-                                                {conv.isGroup ? (
-                                                    <div className="h-12 w-12 rounded-full border border-border/50 group-hover:border-primary/20 transition-colors bg-primary/10 flex items-center justify-center text-primary">
-                                                        <Users className="h-6 w-6" />
+                            ) : (
+                                users.map((user) => (
+                                    <button
+                                        onClick={() => handleUserClick(user._id as Id<"users">)}
+                                        key={user._id}
+                                        className="w-full flex items-center space-x-3 p-3 hover:bg-muted/60 focus:bg-muted/80 rounded-xl transition-all duration-200 text-left group"
+                                    >
+                                        <div className="relative">
+                                            <Avatar className="h-12 w-12 border border-border/50 group-hover:border-primary/20 transition-colors">
+                                                <AvatarImage src={user.avatarUrl} />
+                                                <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            {user.isOnline && (
+                                                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background shadow-sm ring-1 ring-green-500/20"></span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-sm truncate pr-2">{user.name}</h3>
+                                            <p className="text-xs text-muted-foreground truncate opacity-80 mt-0.5">
+                                                {user.isOnline
+                                                    ? <span className="text-green-600 dark:text-green-500 font-medium">Online</span>
+                                                    : "Tap to start a chat"}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Recent
+                            </div>
+                            {conversations?.map((conv) => {
+                                const displayInfo = conv.displayInfo;
+                                if (!displayInfo) return null;
+                                return (
+                                    <button
+                                        onClick={() => handleConversationClick(conv._id as Id<"conversations">)}
+                                        key={conv._id}
+                                        className="w-full flex items-center space-x-3 p-3 hover:bg-muted/60 focus:bg-muted/80 rounded-xl transition-all duration-200 text-left group"
+                                    >
+                                        <div className="relative">
+                                            {conv.isGroup ? (
+                                                <div className="h-12 w-12 rounded-full border border-border/50 group-hover:border-primary/20 transition-colors bg-primary/10 flex items-center justify-center text-primary">
+                                                    <Users className="h-6 w-6" />
+                                                </div>
+                                            ) : (
+                                                <Avatar className="h-12 w-12 border border-border/50 group-hover:border-primary/20 transition-colors">
+                                                    <AvatarImage src={displayInfo.avatarUrl} />
+                                                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                                                        {displayInfo.name.charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            )}
+                                            {!conv.isGroup && displayInfo.isOnline && (
+                                                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background shadow-sm ring-1 ring-green-500/20"></span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0 flex flex-col">
+                                            <div className="flex justify-between items-baseline mb-0.5">
+                                                <h3 className="font-semibold text-sm truncate pr-2">
+                                                    {displayInfo.name} {conv.isGroup && <span className="text-muted-foreground font-normal text-xs ml-1">({conv.memberCount})</span>}
+                                                </h3>
+                                                {conv.lastMessage && (
+                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                        {new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex justify-between items-center mt-0.5 w-full">
+                                                <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-foreground font-medium' : !conv.lastMessage ? 'italic text-muted-foreground/60' : 'text-muted-foreground opacity-90'}`}>
+                                                    {conv.lastMessage
+                                                        ? `${conv.lastMessage.isCurrentUser ? 'You: ' : ''}${conv.lastMessage.text}`
+                                                        : 'No messages yet...'}
+                                                </p>
+                                                {conv.unreadCount > 0 && (
+                                                    <div className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ml-2 shrink-0">
+                                                        {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                                                     </div>
-                                                ) : (
-                                                    <Avatar className="h-12 w-12 border border-border/50 group-hover:border-primary/20 transition-colors">
-                                                        <AvatarImage src={displayInfo.avatarUrl} />
-                                                        <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                                                            {displayInfo.name.charAt(0).toUpperCase()}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                )}
-                                                {!conv.isGroup && displayInfo.isOnline && (
-                                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background shadow-sm ring-1 ring-green-500/20"></span>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0 flex flex-col">
-                                                <div className="flex justify-between items-baseline mb-0.5">
-                                                    <h3 className="font-semibold text-sm truncate pr-2">
-                                                        {displayInfo.name} {conv.isGroup && <span className="text-muted-foreground font-normal text-xs ml-1">({conv.memberCount})</span>}
-                                                    </h3>
-                                                    {conv.lastMessage && (
-                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                                            {new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex justify-between items-center mt-0.5 w-full">
-                                                    <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-foreground font-medium' : !conv.lastMessage ? 'italic text-muted-foreground/60' : 'text-muted-foreground opacity-90'}`}>
-                                                        {conv.lastMessage
-                                                            ? `${conv.lastMessage.isCurrentUser ? 'You: ' : ''}${conv.lastMessage.text}`
-                                                            : 'No messages yet...'}
-                                                    </p>
-                                                    {conv.unreadCount > 0 && (
-                                                        <div className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ml-2 shrink-0">
-                                                            {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </>
-                        )
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </>
                     )}
                 </div>
             </ScrollArea>
