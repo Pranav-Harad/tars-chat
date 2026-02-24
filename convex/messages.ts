@@ -101,40 +101,33 @@ export const toggleReaction = mutation({
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        let reactions = message.reactions || [];
-
-        // Enforce one reaction per user: remove user from all OTHER emoji reactions first
-        reactions = reactions
-            .map(r => r.emoji !== args.emoji
-                ? { ...r, userIds: r.userIds.filter(id => id !== user._id) }
-                : r
-            )
+        // 1. First, completely remove this user from ALL existing reactions
+        const cleanReactions = (message.reactions || [])
+            .map(r => ({
+                ...r,
+                userIds: r.userIds.filter(id => id !== user._id)
+            }))
             .filter(r => r.userIds.length > 0);
 
-        const existingReactionIndex = reactions.findIndex(r => r.emoji === args.emoji);
+        // 2. Determine if the user was already reacting with THIS specific emoji
+        const existingReaction = (message.reactions || []).find(r => r.emoji === args.emoji);
+        const wasReactingWithThisEmoji = existingReaction?.userIds.includes(user._id);
 
-        if (existingReactionIndex !== -1) {
-            const reaction = reactions[existingReactionIndex];
-            const hasReacted = reaction.userIds.includes(user._id);
+        let finalReactions = [...cleanReactions];
 
-            if (hasReacted) {
-                // Toggle off: remove user from this emoji
-                reaction.userIds = reaction.userIds.filter(id => id !== user._id);
-                if (reaction.userIds.length === 0) {
-                    reactions.splice(existingReactionIndex, 1);
-                }
+        // 3. If they weren't already reacting with this emoji (or if they were reacting with a DIFFERENT emoji), add them to this emoji
+        if (!wasReactingWithThisEmoji) {
+            const targetEmojiIndex = finalReactions.findIndex(r => r.emoji === args.emoji);
+            if (targetEmojiIndex !== -1) {
+                finalReactions[targetEmojiIndex].userIds.push(user._id);
             } else {
-                // Add user to existing emoji group
-                reaction.userIds.push(user._id);
+                finalReactions.push({
+                    emoji: args.emoji,
+                    userIds: [user._id]
+                });
             }
-        } else {
-            // New emoji reaction
-            reactions.push({
-                emoji: args.emoji,
-                userIds: [user._id],
-            });
         }
 
-        await ctx.db.patch(args.messageId, { reactions });
+        await ctx.db.patch(args.messageId, { reactions: finalReactions });
     },
 });
