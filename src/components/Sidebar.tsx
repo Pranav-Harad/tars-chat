@@ -81,7 +81,7 @@ export function Sidebar() {
             <div className="p-4 border-b bg-background/50 backdrop-blur-md sticky top-0 z-20">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        Messages
+                        Pranverse
                     </h2>
 
                     <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
