@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { api } from "../../convex/_generated/api";
 import { Input } from "./ui/input";
@@ -311,6 +311,52 @@ export function Sidebar() {
                     )}
                 </div>
             </ScrollArea>
+
+            {/* ── Sidebar Footer ── */}
+            <SidebarFooter />
+        </div>
+    );
+}
+
+const QUOTES = [
+    "Every great friendship starts with a simple hello.",
+    "The best conversations are the ones that never end.",
+    "Stay connected. Stay inspired.",
+    "Your words can light up someone's day.",
+    "Real connections happen one message at a time.",
+];
+
+function SidebarFooter() {
+    const [quoteIdx, setQuoteIdx] = useState(0);
+    const [fading, setFading] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setFading(true);
+            setTimeout(() => {
+                setQuoteIdx(i => (i + 1) % QUOTES.length);
+                setFading(false);
+            }, 400);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="px-4 py-3 border-t border-border/40 bg-background/50 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-5 h-5 rounded-md bg-primary flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-primary-foreground">
+                        <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
+                    </svg>
+                </div>
+                <span className="text-[11px] font-bold text-foreground tracking-tight">Pranverse</span>
+            </div>
+            <p
+                className="text-[10px] text-muted-foreground/70 leading-snug italic transition-opacity duration-500"
+                style={{ opacity: fading ? 0 : 1 }}
+            >
+                &ldquo;{QUOTES[quoteIdx]}&rdquo;
+            </p>
         </div>
     );
 }

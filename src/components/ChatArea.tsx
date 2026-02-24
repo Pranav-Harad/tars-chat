@@ -122,7 +122,114 @@ export function ChatArea({
     const otherLastRead = getOtherLastRead();
 
     return (
-        <div className="flex flex-col h-full w-full bg-background relative">
+        <div className="flex flex-col h-full w-full relative" style={{ background: "var(--background)" }}>
+            {/* ── Chat Wallpaper ── */}
+            <div
+                className="absolute inset-0 pointer-events-none -z-10"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
+  <defs>
+    <style>
+      .icon { fill: none; stroke: %23888; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.18; }
+    </style>
+  </defs>
+
+  <!-- Chat bubble top-left -->
+  <g transform='translate(10,8)' class='icon'>
+    <path d='M2 10a8 8 0 1 0 14.5 4.5L18 20l-4-1.8A8 8 0 0 0 2 10z'/>
+    <line x1='6' y1='9' x2='12' y2='9'/><line x1='6' y1='12' x2='10' y2='12'/>
+  </g>
+
+  <!-- Heart -->
+  <g transform='translate(110,5)' class='icon'>
+    <path d='M12 21C12 21 3 13.5 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5.5-9 13-9 13z'/>
+  </g>
+
+  <!-- Star -->
+  <g transform='translate(55,2)' class='icon'>
+    <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26'/>
+  </g>
+
+  <!-- Lightning bolt -->
+  <g transform='translate(168,10)' class='icon'>
+    <polyline points='13,2 7,13 12,13 11,22 17,11 12,11'/>
+  </g>
+
+  <!-- Music note -->
+  <g transform='translate(140,55)' class='icon'>
+    <path d='M9 18V5l12-2v13'/>
+    <circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/>
+  </g>
+
+  <!-- Smiley -->
+  <g transform='translate(12,70)' class='icon'>
+    <circle cx='12' cy='12' r='10'/>
+    <path d='M8 14s1.5 2 4 2 4-2 4-2'/>
+    <line x1='9' y1='9' x2='9.01' y2='9'/><line x1='15' y1='9' x2='15.01' y2='9'/>
+  </g>
+
+  <!-- Bell -->
+  <g transform='translate(80,60)' class='icon'>
+    <path d='M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9'/>
+    <path d='M13.73 21a2 2 0 0 1-3.46 0'/>
+  </g>
+
+  <!-- Infinity / waves -->
+  <g transform='translate(155,75)' class='icon'>
+    <path d='M12 12c-2-2.5-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1.5 6-4z'/>
+    <path d='M12 12c2 2.5 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.5-6 4z'/>
+  </g>
+
+  <!-- Rocket -->
+  <g transform='translate(40,100)' class='icon'>
+    <path d='M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z'/>
+    <path d='m3.29 15 11-11a9 9 0 0 1 7 7l-11 11a7 7 0 0 1-7-7z'/>
+    <path d='M16 6.77 17.5 5.5'/><circle cx='14' cy='10' r='1'/>
+  </g>
+
+  <!-- Globe -->
+  <g transform='translate(110,100)' class='icon'>
+    <circle cx='12' cy='12' r='10'/>
+    <path d='M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20'/>
+  </g>
+
+  <!-- Sparkle -->
+  <g transform='translate(170,115)' class='icon'>
+    <path d='M12 3v4M12 17v4M3 12h4M17 12h4M6.34 6.34l2.83 2.83M14.83 14.83l2.83 2.83M6.34 17.66l2.83-2.83M14.83 9.17l2.83-2.83'/>
+  </g>
+
+  <!-- Paper plane -->
+  <g transform='translate(6,148)' class='icon'>
+    <line x1='22' y1='2' x2='11' y2='13'/><polygon points='22 2 15 22 11 13 2 9 22 2'/>
+  </g>
+
+  <!-- Camera -->
+  <g transform='translate(80,140)' class='icon'>
+    <path d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/>
+    <circle cx='12' cy='13' r='4'/>
+  </g>
+
+  <!-- Lock -->
+  <g transform='translate(150,145)' class='icon'>
+    <rect x='3' y='11' width='18' height='11' rx='2' ry='2'/>
+    <path d='M7 11V7a5 5 0 0 1 10 0v4'/>
+  </g>
+
+  <!-- Small hearts scattered -->
+  <g transform='translate(95,35)' class='icon' style='opacity:0.10'>
+    <path d='M7 10C7 10 3 7.5 3 5a3 3 0 0 1 5.4-1.8A3 3 0 0 1 13 5c0 2.5-4 5-4 5-1 0-2 0-2 0z' stroke-width='1'/>
+  </g>
+
+  <!-- Tiny star scattered -->
+  <g transform='translate(140,25)' class='icon' style='opacity:0.10'>
+    <polygon points='12,5 13.5,9.5 18,9.5 14.5,12.5 16,17 12,14 8,17 9.5,12.5 6,9.5 10.5,9.5' stroke-width='1'/>
+  </g>
+</svg>`)}`)`,
+            backgroundSize: "200px 200px",
+            backgroundRepeat: "repeat",
+                }}
+            />
+
             {/* Leave Group Confirmation Dialog */}
             <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
                 <DialogContent showCloseButton={false} className="sm:max-w-sm">
