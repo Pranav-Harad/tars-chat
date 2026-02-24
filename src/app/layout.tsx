@@ -10,6 +10,8 @@ import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { UserSync } from "@/components/UserSync";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Toaster } from "@/components/ui/sonner";
+import { PushNotifications } from "@/components/PushNotifications";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +44,7 @@ export default function RootLayout({
             <ConvexClientProvider>
               <SignedIn>
                 <UserSync />
+                <PushNotifications />
               </SignedIn>
               <header className="flex justify-between items-center px-6 py-3 border-b bg-card/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center gap-2">
@@ -58,6 +61,7 @@ export default function RootLayout({
                 </div>
               </header>
               {children}
+              <Toaster position="top-center" richColors />
             </ConvexClientProvider>
           </ThemeProvider>
         </body>
