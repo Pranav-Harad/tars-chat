@@ -150,7 +150,7 @@ export function ChatArea({
                     variant="ghost"
                     size="icon"
                     className="md:hidden shrink-0 -ml-2"
-                    onClick={() => router.push("/")}
+                    onClick={() => router.push("/chat")}
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </Button>

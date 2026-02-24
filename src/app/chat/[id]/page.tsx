@@ -16,7 +16,11 @@ export default async function ChatPage({
 
     return (
         <main className="flex h-[calc(100vh-65px)] w-full overflow-hidden bg-background">
-            <Sidebar />
+            {/* Sidebar: hidden on mobile when chat is open, visible on desktop */}
+            <div className="hidden md:flex md:w-80 h-full shrink-0">
+                <Sidebar />
+            </div>
+            {/* ChatArea: full screen on mobile, flex-1 on desktop */}
             <div className="flex-1 flex w-full h-full relative overflow-hidden">
                 <ChatArea conversationId={id as Id<"conversations">} />
             </div>
