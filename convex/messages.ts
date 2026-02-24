@@ -102,6 +102,15 @@ export const toggleReaction = mutation({
         if (!message) throw new Error("Message not found");
 
         let reactions = message.reactions || [];
+
+        // Enforce one reaction per user: remove user from all OTHER emoji reactions first
+        reactions = reactions
+            .map(r => r.emoji !== args.emoji
+                ? { ...r, userIds: r.userIds.filter(id => id !== user._id) }
+                : r
+            )
+            .filter(r => r.userIds.length > 0);
+
         const existingReactionIndex = reactions.findIndex(r => r.emoji === args.emoji);
 
         if (existingReactionIndex !== -1) {
@@ -109,14 +118,17 @@ export const toggleReaction = mutation({
             const hasReacted = reaction.userIds.includes(user._id);
 
             if (hasReacted) {
+                // Toggle off: remove user from this emoji
                 reaction.userIds = reaction.userIds.filter(id => id !== user._id);
                 if (reaction.userIds.length === 0) {
                     reactions.splice(existingReactionIndex, 1);
                 }
             } else {
+                // Add user to existing emoji group
                 reaction.userIds.push(user._id);
             }
         } else {
+            // New emoji reaction
             reactions.push({
                 emoji: args.emoji,
                 userIds: [user._id],

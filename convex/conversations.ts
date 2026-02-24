@@ -256,3 +256,31 @@ export const markRead = mutation({
         await ctx.db.patch(args.conversationId, { lastRead });
     }
 });
+
+export const leaveGroup = mutation({
+    args: { conversationId: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user) throw new Error("User not found");
+
+        const conv = await ctx.db.get(args.conversationId);
+        if (!conv) throw new Error("Conversation not found");
+        if (!conv.isGroup) throw new Error("Not a group conversation");
+        if (!conv.participantIds.includes(user._id)) throw new Error("You are not in this group");
+
+        const newParticipants = conv.participantIds.filter(id => id !== user._id);
+
+        if (newParticipants.length === 0) {
+            // Last member leaving — delete the conversation
+            await ctx.db.delete(args.conversationId);
+        } else {
+            await ctx.db.patch(args.conversationId, { participantIds: newParticipants });
+        }
+    },
+});

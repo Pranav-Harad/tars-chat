@@ -7,13 +7,20 @@ import { Id } from "../../convex/_generated/dataModel";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { Send, ArrowDown, Trash2, SmilePlus, Loader2, AlertCircle, Check, CheckCheck } from "lucide-react";
+import { Send, ArrowDown, Trash2, SmilePlus, Loader2, AlertCircle, Check, CheckCheck, LogOut } from "lucide-react";
 import { format, isToday, isThisYear } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Skeleton } from "./ui/skeleton";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "./ui/dialog";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢"];
 
@@ -27,6 +34,7 @@ export function ChatArea({
     const sendMessage = useMutation(api.messages.send);
     const deleteMessage = useMutation(api.messages.remove);
     const toggleReaction = useMutation(api.messages.toggleReaction);
+    const leaveGroup = useMutation(api.conversations.leaveGroup);
     const conversation = useQuery(api.conversations.get, { conversationId });
     const setTypingMutation = useMutation(api.conversations.setTyping);
 
@@ -36,7 +44,21 @@ export function ChatArea({
     const [isScrolledUp, setIsScrolledUp] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [sendError, setSendError] = useState<string | null>(null);
+    const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
     const router = useRouter();
+
+    const handleLeaveGroup = async () => {
+        setIsLeaving(true);
+        try {
+            await leaveGroup({ conversationId });
+            router.push("/chat");
+        } catch (error) {
+            console.error("Failed to leave group:", error);
+            setIsLeaving(false);
+            setShowLeaveDialog(false);
+        }
+    };
 
     // Auto-scroll logic
     useEffect(() => {
@@ -101,6 +123,27 @@ export function ChatArea({
 
     return (
         <div className="flex flex-col h-full w-full bg-background relative">
+            {/* Leave Group Confirmation Dialog */}
+            <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+                <DialogContent showCloseButton={false} className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Leave Group?</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                        Are you sure you want to leave <strong>{conversation?.displayInfo?.name}</strong>? You won&apos;t receive any more messages from this group.
+                    </p>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setShowLeaveDialog(false)} disabled={isLeaving}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleLeaveGroup} disabled={isLeaving}>
+                            {isLeaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
+                            Leave Group
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Header */}
             <div className="p-4 border-b bg-card/50 backdrop-blur-md z-10 flex items-center gap-3 shadow-sm sticky top-0">
                 <Button
@@ -111,16 +154,16 @@ export function ChatArea({
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </Button>
-                <div className="flex items-center gap-3 relative">
-                    <Avatar className="h-10 w-10">
+                <div className="flex items-center gap-3 relative flex-1 min-w-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                         <AvatarImage src={conversation?.displayInfo?.avatarUrl} />
                         <AvatarFallback>{conversation?.isGroup ? "G" : conversation?.displayInfo?.name?.charAt(0) || "#"}</AvatarFallback>
                     </Avatar>
                     {conversation && !conversation.isGroup && conversation.displayInfo?.isOnline && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full z-10"></span>
+                        <span className="absolute bottom-0 left-7 w-3 h-3 bg-green-500 border-2 border-background rounded-full z-10"></span>
                     )}
-                    <div>
-                        <h2 className="font-semibold text-foreground">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="font-semibold text-foreground truncate">
                             {conversation?.displayInfo?.name || "Loading..."}
                         </h2>
                         <p className="text-xs text-muted-foreground">
@@ -135,6 +178,18 @@ export function ChatArea({
                         </p>
                     </div>
                 </div>
+                {/* Leave Group button — only for group conversations */}
+                {conversation?.isGroup && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        title="Leave Group"
+                        onClick={() => setShowLeaveDialog(true)}
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </Button>
+                )}
             </div>
 
             {/* Messages Area */}
